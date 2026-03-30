@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <pattern id="hlines" x="0" y="0" width="800" height="16" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0.5" x2="800" y2="0.5" stroke="white" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#hlines)"/>
+  <line x1="0" y1="600" x2="800" y2="0" stroke="white" stroke-width="0.5"/>
+  <line x1="-120" y1="600" x2="680" y2="0" stroke="white" stroke-width="0.5"/>
+  <line x1="120" y1="600" x2="920" y2="0" stroke="white" stroke-width="0.5"/>
+  <line x1="-240" y1="600" x2="560" y2="0" stroke="white" stroke-width="0.5"/>
+  <line x1="240" y1="600" x2="1040" y2="0" stroke="white" stroke-width="0.5"/>
+</svg>

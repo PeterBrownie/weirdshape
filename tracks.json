@@ -1,0 +1,65 @@
+[
+  {
+    "slug": "spectra",
+    "title": "spectra",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/spectra",
+    "description": "spectra description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "fusion",
+    "title": "fusion",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/fusion",
+    "description": "fusion description",
+    "tags": ["electronic"]
+  },{
+    "slug": "skylines",
+    "title": "skylines",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/skylines",
+    "description": "skylines description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "evergreen",
+    "title": "evergreen",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/evergreen",
+    "description": "evergreen description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "sidewalk",
+    "title": "sidewalk",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/sidewalk",
+    "description": "sidewalk description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "artifacts",
+    "title": "artifacts",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/artifacts",
+    "description": "artifacts description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "radiance",
+    "title": "radiance",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/radiance",
+    "description": "radiance description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "fireflies",
+    "title": "evergreen",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/fireflies",
+    "description": "fireflies description",
+    "tags": ["electronic"]
+  }
+]
