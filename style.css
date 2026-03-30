@@ -172,6 +172,127 @@ nav a:hover {
   padding: 0.2rem 0.6rem;
 }
 
+/* Player */
+
+.player {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 2.5rem;
+}
+
+.artwork-wrap {
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+  background: url('svgs/artwork-placeholder.svg') center / cover;
+  position: relative;
+}
+
+.player-artwork {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.player-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding-top: 0.125rem;
+  position: relative;
+}
+
+.waveform {
+  width: 100%;
+  height: 64px;
+  display: block;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.player-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.player-loader svg {
+  width: 36px;
+  height: 16px;
+  opacity: 0.35;
+}
+
+.player-loader .bar {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bar-pulse 1.1s ease-in-out infinite;
+}
+
+.player-loader .bar:nth-child(1) { animation-delay: 0s; }
+.player-loader .bar:nth-child(2) { animation-delay: 0.18s; }
+.player-loader .bar:nth-child(3) { animation-delay: 0.06s; }
+.player-loader .bar:nth-child(4) { animation-delay: 0.28s; }
+.player-loader .bar:nth-child(5) { animation-delay: 0.12s; }
+
+@keyframes bar-pulse {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.2); }
+}
+
+.play-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  width: 5.5rem;
+}
+
+.play-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.player-time {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 500px) {
+  .player {
+    flex-direction: column;
+  }
+
+  .artwork-wrap {
+    width: 100%;
+    aspect-ratio: 1;
+    height: auto;
+  }
+}
+
 /* Not found */
 
 .not-found {
