@@ -8,7 +8,25 @@
 </head>
 <body>
   <div id="bg"></div>
+  <iframe id="sc-iframe" src="" allow="autoplay" style="display:none"></iframe>
+  <iframe id="sc-meta-iframe" src="" style="display:none"></iframe>
   <div id="app"></div>
+  <div id="mini-bar">
+    <div class="mini-progress"><div class="mini-progress-fill"></div></div>
+    <div class="mini-content">
+      <div class="mini-left">
+        <div class="mini-artwork-wrap">
+          <img class="mini-artwork" alt="">
+        </div>
+        <span class="mini-title"></span>
+      </div>
+      <div class="mini-right">
+        <span class="mini-time">0:00 / 0:00</span>
+        <button class="mini-play">play</button>
+        <button class="mini-skip">skip</button>
+      </div>
+    </div>
+  </div>
   <script src="app.js"></script>
 </body>
 </html>
