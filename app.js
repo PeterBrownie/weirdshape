@@ -121,15 +121,15 @@ function route() {
   loadingDotsInterval = null;
   const hash = location.hash;
   const app = document.getElementById('app');
-  const bg = document.getElementById('bg');
+  const bgIframe = document.getElementById('bg-iframe');
 
   if (hash.startsWith('#/track/')) {
     const slug = hash.slice('#/track/'.length);
     const track = tracks.find(t => t.slug === slug);
-    bg.className = 'track';
+    bgIframe.src = 'svgs/bg-track.svg';
     track ? renderTrack(app, track) : renderNotFound(app);
   } else {
-    bg.className = 'home';
+    bgIframe.src = 'svgs/bg-home.svg';
     renderHome(app);
   }
 

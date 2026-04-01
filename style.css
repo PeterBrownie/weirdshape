@@ -24,18 +24,21 @@ html, body {
   inset: 0;
   z-index: 0;
   opacity: 0.12;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   pointer-events: none;
+  overflow: hidden;
 }
 
-#bg.home {
-  background-image: url('svgs/bg-home.svg');
-}
-
-#bg.track {
-  background-image: url('svgs/bg-track.svg');
+#bg-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50vw;
+  height: 50vh;
+  transform: scale(2);
+  transform-origin: top left;
+  border: none;
+  display: block;
+  pointer-events: none;
 }
 
 #app {
