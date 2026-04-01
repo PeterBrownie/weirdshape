@@ -32,9 +32,9 @@ html, body {
   position: absolute;
   top: 0;
   left: 0;
-  width: 50vw;
-  height: 50vh;
-  transform: scale(2);
+  width: 33vw;
+  height: 33vh;
+  transform: scale(3);
   transform-origin: top left;
   border: none;
   display: block;
