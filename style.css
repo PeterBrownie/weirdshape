@@ -32,9 +32,6 @@ html, body {
   position: absolute;
   top: 0;
   left: 0;
-  width: 10vw;
-  height: 10vh;
-  transform: scale(10);
   transform-origin: top left;
   border: none;
   display: block;

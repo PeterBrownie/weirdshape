@@ -68,6 +68,18 @@ function restartTrack() {
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 
+function applyBgScale() {
+  const dpr = window.devicePixelRatio || 1;
+  const iframe = document.getElementById('bg-iframe');
+  const pct = 1 / dpr;
+  iframe.style.width = pct + 'vw';
+  iframe.style.height = pct + 'vh';
+  iframe.style.transform = `scale(${100 * dpr})`;
+  // Re-listen for next DPR change (e.g. dragging between monitors)
+  window.matchMedia(`(resolution: ${dpr}dppx)`)
+    .addEventListener('change', applyBgScale, { once: true });
+}
+
 async function init() {
   try {
     const res = await fetch('tracks.json');
@@ -90,6 +102,7 @@ async function init() {
     }
   });
 
+  applyBgScale();
   route();
   window.addEventListener('hashchange', route);
 }
