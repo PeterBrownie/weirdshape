@@ -1,5 +1,11 @@
 let tracks = [];
 
+// Button icons
+const PLAY_ICON    = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 12" width="10" height="12" fill="currentColor"><polygon points="0,0 10,6 0,12"/></svg>`;
+const PAUSE_ICON   = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11 12" width="11" height="12" fill="currentColor"><rect x="0" y="0" width="3.5" height="12"/><rect x="7.5" y="0" width="3.5" height="12"/></svg>`;
+const RESTART_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="12" height="12" fill="currentColor"><rect x="0" y="0" width="2" height="12"/><polygon points="2,6 12,0 12,12"/></svg>`;
+const SKIP_ICON    = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="12" height="12" fill="currentColor"><polygon points="0,0 10,6 0,12"/><rect x="10" y="0" width="2" height="12"/></svg>`;
+
 // Cached metadata per track slug: { artworkSrc, samples }
 const trackCache = {};
 
@@ -68,16 +74,41 @@ function restartTrack() {
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 
+// Disable animated background on Firefox with high DPI — known to cause lag
+const isFirefoxHighDPI = /Firefox/i.test(navigator.userAgent) && (window.devicePixelRatio || 1) > 1;
+
 function applyBgScale() {
-  const dpr = window.devicePixelRatio || 1;
-  const iframe = document.getElementById('bg-iframe');
-  const pct = 1 / dpr;
-  iframe.style.width = pct + 'vw';
-  iframe.style.height = pct + 'vh';
-  iframe.style.transform = `scale(${100 * dpr})`;
-  // Re-listen for next DPR change (e.g. dragging between monitors)
-  window.matchMedia(`(resolution: ${dpr}dppx)`)
-    .addEventListener('change', applyBgScale, { once: true });
+  // Cover-scale the canvas so it fills the viewport without gaps.
+  // Base is the canvas's CSS size (1280×720) matching the SVG canonical dimensions.
+  const scale = Math.max(window.innerWidth / 1280, window.innerHeight / 720);
+  document.getElementById('bg-canvas').style.transform = `translate(-50%, -50%) scale(${scale})`;
+}
+
+// Render a static SVG file to the background canvas using the off-DOM img pipeline.
+// Chrome computes feTurbulence/feDisplacementMap at the SVG's intrinsic dimensions
+// (its width/height attributes) when the image is not in the DOM — so filter patterns
+// are always anchored to the SVG's canonical coordinate space regardless of viewport.
+async function renderSVGToCanvas(url) {
+  const canvas = document.getElementById('bg-canvas');
+  if (canvas.dataset.currentSrc === url) return; // already rendered, no-op
+  const res = await fetch(url);
+  const svgText = await res.text();
+  const blob = new Blob([svgText], { type: 'image/svg+xml' });
+  const objectUrl = URL.createObjectURL(blob);
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width  = Math.round(img.naturalWidth  * dpr);
+      canvas.height = Math.round(img.naturalHeight * dpr);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(objectUrl);
+      canvas.dataset.currentSrc = url;
+      resolve();
+    };
+    img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(); };
+    img.src = objectUrl;
+  });
 }
 
 async function init() {
@@ -92,9 +123,11 @@ async function init() {
     player.widget?.toggle();
   });
 
+  document.querySelector('.mini-restart').addEventListener('click', () => restartTrack());
   document.querySelector('.mini-skip').addEventListener('click', () => skipToNext());
 
   window.addEventListener('resize', () => {
+    applyBgScale();
     const canvas = document.querySelector('.waveform');
     if (canvas) {
       canvas.width = canvas.offsetWidth;
@@ -126,7 +159,21 @@ function setPlayBtnLoading(loading) {
     }, 380);
   } else {
     btn.disabled = false;
+    btn.innerHTML = PLAY_ICON;
   }
+}
+
+// Loaded once; subsequent home visits just show the frozen end-state
+let bgHomeLoaded = false;
+
+function showBgHome() {
+  document.getElementById('bg-canvas').style.display = 'none';
+  document.getElementById('bg-home').style.display = 'block';
+}
+
+function showBgCanvas() {
+  document.getElementById('bg-home').style.display = 'none';
+  document.getElementById('bg-canvas').style.display = 'block';
 }
 
 function route() {
@@ -134,15 +181,34 @@ function route() {
   loadingDotsInterval = null;
   const hash = location.hash;
   const app = document.getElementById('app');
-  const bgIframe = document.getElementById('bg-iframe');
 
   if (hash.startsWith('#/track/')) {
     const slug = hash.slice('#/track/'.length);
     const track = tracks.find(t => t.slug === slug);
-    bgIframe.src = 'svgs/bg-track.svg';
+
+    // Song-specific bg if defined, else fallback. Firefox+highDPI always uses the fallback.
+    const bgSrc = (!isFirefoxHighDPI && track?.background) ? track.background : 'svgs/bg-track.svg';
+    showBgCanvas();
+    renderSVGToCanvas(bgSrc).then(applyBgScale);
+
     track ? renderTrack(app, track) : renderNotFound(app);
   } else {
-    bgIframe.src = 'svgs/bg-home.svg';
+    if (isFirefoxHighDPI) {
+      // Skip the animated home bg to avoid lag — use the static fallback via canvas
+      showBgCanvas();
+      renderSVGToCanvas('svgs/bg-track.svg').then(applyBgScale);
+    } else {
+      // Insert the animated SVG inline once; it plays and freezes (repeatCount="1" fill="freeze").
+      // Subsequent visits just un-hide the div — the animation stays at its end state.
+      if (!bgHomeLoaded) {
+        fetch('svgs/bg-home.svg')
+          .then(r => r.text())
+          .then(svg => { document.getElementById('bg-home').innerHTML = svg; });
+        bgHomeLoaded = true;
+      }
+      showBgHome();
+    }
+
     renderHome(app);
   }
 
@@ -190,9 +256,9 @@ function renderTrack(app, track) {
           ${!cached ? loaderHTML() : ''}
           <canvas class="waveform"></canvas>
           <div class="player-controls">
-            <button class="restart-btn" ${!sameSong || player.loading ? 'disabled' : ''}>restart</button>
-            <button class="play-btn" ${player.loading && sameSong ? 'disabled' : ''}>${player.isPlaying && sameSong ? 'pause' : (player.loading && sameSong ? '.' : 'play')}</button>
-            <button class="skip-btn">skip</button>
+            <button class="restart-btn" ${!sameSong || player.loading ? 'disabled' : ''}>${RESTART_ICON}</button>
+            <button class="play-btn" ${player.loading && sameSong ? 'disabled' : ''}>${player.isPlaying && sameSong ? PAUSE_ICON : (player.loading && sameSong ? '.' : PLAY_ICON)}</button>
+            <button class="skip-btn">${SKIP_ICON}</button>
             <span class="player-time">
               <span class="time-current">${sameSong ? fmt(player.position) : '0:00'}</span>
               <span class="time-sep"> / </span>
@@ -410,6 +476,8 @@ function initPlayerWidget() {
       setPlayBtnLoading(false);
       const restartBtn = document.querySelector('.restart-btn');
       if (restartBtn) restartBtn.disabled = false;
+      const miniRestart = document.querySelector('.mini-restart');
+      if (miniRestart) miniRestart.disabled = false;
       updateMiniBar();
 
       // Pull waveform from cache if already fetched by meta widget
@@ -464,12 +532,12 @@ function initPlayerWidget() {
 
   player.widget.bind(SC.Widget.Events.PLAY, () => {
     player.isPlaying = true;
-    document.querySelectorAll('.play-btn, .mini-play').forEach(b => { b.textContent = 'pause'; });
+    document.querySelectorAll('.play-btn, .mini-play').forEach(b => { b.innerHTML = PAUSE_ICON; });
   });
 
   player.widget.bind(SC.Widget.Events.PAUSE, () => {
     player.isPlaying = false;
-    document.querySelectorAll('.play-btn, .mini-play').forEach(b => { b.textContent = 'play'; });
+    document.querySelectorAll('.play-btn, .mini-play').forEach(b => { b.innerHTML = PLAY_ICON; });
   });
 
   player.widget.bind(SC.Widget.Events.FINISH, () => {
@@ -480,7 +548,7 @@ function initPlayerWidget() {
       trackCache[player.track.slug].progress = 0;
       trackCache[player.track.slug].position = 0;
     }
-    document.querySelectorAll('.play-btn, .mini-play').forEach(b => { b.textContent = 'play'; });
+    document.querySelectorAll('.play-btn, .mini-play').forEach(b => { b.innerHTML = PLAY_ICON; });
     const canvas = document.querySelector('.waveform');
     if (canvas) drawWaveform(canvas, trackCache[player.track?.slug]?.samples ?? null, 0);
     skipToNext();

@@ -14,7 +14,10 @@
   <meta property="og:image" content="https://weirdshape.com/meta.jpg">
 </head>
 <body>
-  <div id="bg"><iframe id="bg-iframe" src="" scrolling="no" tabindex="-1" aria-hidden="true"></iframe></div>
+  <div id="bg">
+    <div id="bg-home" aria-hidden="true"></div>
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  </div>
   <iframe id="sc-iframe" src="" allow="autoplay" style="display:none"></iframe>
   <iframe id="sc-meta-iframe" src="" style="display:none"></iframe>
   <div id="app"></div>
@@ -29,8 +32,9 @@
       </div>
       <div class="mini-right">
         <span class="mini-time">0:00 / 0:00</span>
-        <button class="mini-play">play</button>
-        <button class="mini-skip">skip</button>
+        <button class="mini-restart" disabled><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="12" height="12" fill="currentColor"><rect x="0" y="0" width="2" height="12"/><polygon points="2,6 12,0 12,12"/></svg></button>
+        <button class="mini-play"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 12" width="10" height="12" fill="currentColor"><polygon points="0,0 10,6 0,12"/></svg></button>
+        <button class="mini-skip"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="12" height="12" fill="currentColor"><polygon points="0,0 10,6 0,12"/><rect x="10" y="0" width="2" height="12"/></svg></button>
       </div>
     </div>
   </div>
