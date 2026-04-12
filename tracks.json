@@ -1,5 +1,12 @@
 [
   {
+    "slug": "If You Want",
+    "title": "If You Want",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/ifyouwant",
+    "description": "this is my first song with vocals.",
+    "tags": ["electronic","indie"]
+  },{
     "slug": "spectra",
     "title": "spectra",
     "year": 2026,
@@ -60,6 +67,110 @@
     "year": 2026,
     "soundcloudUrl": "https://soundcloud.com/weirdshape/fireflies",
     "description": "fireflies description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "sick days",
+    "title": "sick days",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/sickdays",
+    "description": "sick days description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "card",
+    "title": "card",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/card",
+    "description": "card description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "starlight",
+    "title": "starlight",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/starlight",
+    "description": "starlight description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "heartstring",
+    "title": "heartstring",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/heartstring",
+    "description": "heartstring description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "signature",
+    "title": "signature",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/signature",
+    "description": "signature description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "shapenoise",
+    "title": "shapenoise",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/shapenoise",
+    "description": "shapenoise description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "heat",
+    "title": "heat",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/heat",
+    "description": "heat description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "throwaway",
+    "title": "throwaway",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/throwaway",
+    "description": "throwaway description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "crunchy",
+    "title": "crunchy",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/crunchy",
+    "description": "crunchy description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "radio",
+    "title": "radio",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/radio",
+    "description": "radio description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "melon",
+    "title": "melon",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/melon",
+    "description": "melon description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "catch",
+    "title": "catch",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/catch",
+    "description": "catch description",
+    "tags": ["electronic"]
+  },
+  {
+    "slug": "well",
+    "title": "well",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/well",
+    "description": "well description",
     "tags": ["electronic"]
   }
 ]
