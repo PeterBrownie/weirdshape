@@ -82,6 +82,22 @@ let isAnimatedMode = !(/Firefox/i.test(navigator.userAgent) && (window.devicePix
 // SVG text cache — avoids re-fetching when the user toggles mode.
 const svgTextCache = {};
 
+// Rewrites all id="..." definitions and url(#...) / href="#..." references in SVG text
+// so that multiple SVGs can coexist inline without ID collisions.
+function prefixSvgIds(svgText, prefix) {
+  const ids = [];
+  svgText.replace(/\bid="([^"]+)"/g, (_, id) => ids.push(id));
+  let result = svgText;
+  for (const id of ids) {
+    const esc = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result
+      .replace(new RegExp(`id="${esc}"`, 'g'), `id="${prefix}-${id}"`)
+      .replace(new RegExp(`url\\(#${esc}\\)`, 'g'), `url(#${prefix}-${id})`)
+      .replace(new RegExp(`href="#${esc}"`, 'g'), `href="#${prefix}-${id}"`);
+  }
+  return result;
+}
+
 function applyBgScale() {
   // Cover-scale all three bg layers so they fill the viewport without gaps.
   // All three use the same fixed 1280×720 CSS size, so one scale value covers all.
@@ -205,7 +221,8 @@ async function applyTrackBg(url) {
   const svgText = svgTextCache[url];
 
   if (isAnimatedMode) {
-    inlineEl.innerHTML = svgText;
+    const prefix = url.replace(/.*\//, '').replace(/\.svg$/, '');
+    inlineEl.innerHTML = prefixSvgIds(svgText, prefix);
     inlineEl.dataset.currentSrc = url;
     showBg('bg-track-inline');
     // Restart SMIL animations explicitly — required in Firefox when the SVG was
@@ -249,7 +266,7 @@ function applyCurrentBg() {
         bgHomeLoaded = true;
         fetch('svgs/bg-home.svg').then(r => r.text()).then(svg => {
           const el = document.getElementById('bg-home');
-          el.innerHTML = svg;
+          el.innerHTML = prefixSvgIds(svg, 'bg-home');
           el.querySelectorAll('animate, animateTransform')
             .forEach(a => { try { a.beginElement(); } catch(e) {} });
         });
