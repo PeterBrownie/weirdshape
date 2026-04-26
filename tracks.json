@@ -1,10 +1,19 @@
 [
   {
+    "slug": "designer",
+    "title": "designer",
+    "year": 2026,
+    "soundcloudUrl": "https://soundcloud.com/weirdshape/designer",
+    "backgroundStatic": "svgs/bg-designer-static.svg",
+    "description": "playing around with pitch bend, galloping kick drums, and bpm ramping.",
+    "tags": ["electronic","house"]
+  },{
     "slug": "ifyouwant",
     "title": "If You Want",
     "year": 2026,
     "soundcloudUrl": "https://soundcloud.com/weirdshape/ifyouwant",
     "background": "svgs/bg-ifyouwant.svg",
+    "backgroundStatic": "svgs/bg-ifyouwant-static.svg",
     "description": "this is my first song with vocals.",
     "tags": ["electronic","indie"]
   },{

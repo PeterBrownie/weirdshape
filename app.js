@@ -74,25 +74,34 @@ function restartTrack() {
 
 // ─── Bootstrap ───────────────────────────────────────────────────────────────
 
-// Disable animated background on Firefox with high DPI — known to cause lag
-const isFirefoxHighDPI = /Firefox/i.test(navigator.userAgent) && (window.devicePixelRatio || 1) > 1;
+// Animated mode uses inline SVG (SMIL). Static mode uses the off-DOM img → canvas pipeline.
+// Firefox with high DPI starts in static mode; all others start in animated mode.
+// The user can toggle this at any time via the indicator in the bottom-left corner.
+let isAnimatedMode = !(/Firefox/i.test(navigator.userAgent) && (window.devicePixelRatio || 1) > 1);
+
+// SVG text cache — avoids re-fetching when the user toggles mode.
+const svgTextCache = {};
 
 function applyBgScale() {
-  // Cover-scale the canvas so it fills the viewport without gaps.
-  // Base is the canvas's CSS size (1280×720) matching the SVG canonical dimensions.
+  // Cover-scale all three bg layers so they fill the viewport without gaps.
+  // All three use the same fixed 1280×720 CSS size, so one scale value covers all.
   const scale = Math.max(window.innerWidth / 1280, window.innerHeight / 720);
-  document.getElementById('bg-canvas').style.transform = `translate(-50%, -50%) scale(${scale})`;
+  const t = `translate(-50%, -50%) scale(${scale})`;
+  document.getElementById('bg-canvas').style.transform = t;
+  document.getElementById('bg-track-inline').style.transform = t;
+  document.getElementById('bg-home').style.transform = t;
 }
 
 // Render a static SVG file to the background canvas using the off-DOM img pipeline.
 // Chrome computes feTurbulence/feDisplacementMap at the SVG's intrinsic dimensions
 // (its width/height attributes) when the image is not in the DOM — so filter patterns
 // are always anchored to the SVG's canonical coordinate space regardless of viewport.
+// Uses svgTextCache so mode-toggling never re-fetches the same file.
 async function renderSVGToCanvas(url) {
   const canvas = document.getElementById('bg-canvas');
-  if (canvas.dataset.currentSrc === url) return; // already rendered, no-op
-  const res = await fetch(url);
-  const svgText = await res.text();
+  if (canvas.dataset.currentSrc === url) return;
+  if (!svgTextCache[url]) svgTextCache[url] = await fetch(url).then(r => r.text());
+  const svgText = svgTextCache[url];
   const blob = new Blob([svgText], { type: 'image/svg+xml' });
   const objectUrl = URL.createObjectURL(blob);
   return new Promise(resolve => {
@@ -135,6 +144,8 @@ async function init() {
     }
   });
 
+  if (isAnimatedMode) document.body.classList.add('animated-mode');
+  document.getElementById('animated-mode-indicator').addEventListener('click', toggleAnimatedMode);
   applyBgScale();
   route();
   window.addEventListener('hashchange', route);
@@ -163,52 +174,115 @@ function setPlayBtnLoading(loading) {
   }
 }
 
-// Loaded once; subsequent home visits just show the frozen end-state
 let bgHomeLoaded = false;
 
-function showBgHome() {
-  document.getElementById('bg-canvas').style.display = 'none';
-  document.getElementById('bg-home').style.display = 'block';
+// Show exactly one bg layer; hide the others.
+function showBg(id) {
+  for (const elId of ['bg-home', 'bg-track-inline', 'bg-canvas']) {
+    document.getElementById(elId).style.display = elId === id ? 'block' : 'none';
+  }
 }
 
-function showBgCanvas() {
-  document.getElementById('bg-home').style.display = 'none';
-  document.getElementById('bg-canvas').style.display = 'block';
+// Fetch a track background SVG and route it to the correct pipeline.
+// In animated mode: ALWAYS use inline, regardless of whether the SVG has SMIL.
+//   This ensures both the animated and static variants of the same design go through
+//   the exact same rendering path — Chrome computes feTurbulence at identical CSS
+//   pixel dimensions for both, so the patterns match. SMIL animations play automatically.
+// In static mode: canvas pipeline (off-DOM img → drawImage), no animations.
+// SVG text is cached so mode-toggling never re-fetches.
+async function applyTrackBg(url) {
+  const inlineEl = document.getElementById('bg-track-inline');
+  const canvas   = document.getElementById('bg-canvas');
+
+  // Instant show if already rendered for the current mode.
+  if (isAnimatedMode  && inlineEl.dataset.currentSrc === url) { showBg('bg-track-inline'); return; }
+  if (!isAnimatedMode && canvas.dataset.currentSrc   === url) { showBg('bg-canvas'); return; }
+
+  // Clear old bg immediately — blank is better than showing the wrong page's bg.
+  showBg('bg-canvas');
+
+  if (!svgTextCache[url]) svgTextCache[url] = await fetch(url).then(r => r.text());
+  const svgText = svgTextCache[url];
+
+  if (isAnimatedMode) {
+    inlineEl.innerHTML = svgText;
+    inlineEl.dataset.currentSrc = url;
+    showBg('bg-track-inline');
+    // Restart SMIL animations explicitly — required in Firefox when the SVG was
+    // inserted into a hidden element before the container became visible.
+    inlineEl.querySelectorAll('animate, animateTransform')
+      .forEach(a => { try { a.beginElement(); } catch(e) {} });
+  } else {
+    const blob = new Blob([svgText], { type: 'image/svg+xml' });
+    const objectUrl = URL.createObjectURL(blob);
+    await new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = Math.round(img.naturalWidth  * dpr);
+        canvas.height = Math.round(img.naturalHeight * dpr);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(objectUrl);
+        canvas.dataset.currentSrc = url;
+        resolve();
+      };
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(); };
+      img.src = objectUrl;
+    });
+    showBg('bg-canvas');
+  }
+}
+
+// Re-renders only the background for the current route. Called by route() and toggleAnimatedMode().
+function applyCurrentBg() {
+  const hash = location.hash;
+  if (hash.startsWith('#/track/')) {
+    const slug  = hash.slice('#/track/'.length);
+    const track = tracks.find(t => t.slug === slug);
+    const src   = (isAnimatedMode ? track?.background : track?.backgroundStatic)
+      ?? track?.backgroundStatic ?? track?.background ?? 'svgs/bg-track.svg';
+    applyTrackBg(src);
+  } else {
+    if (isAnimatedMode) {
+      showBg('bg-home');
+      if (!bgHomeLoaded) {
+        bgHomeLoaded = true;
+        fetch('svgs/bg-home.svg').then(r => r.text()).then(svg => {
+          const el = document.getElementById('bg-home');
+          el.innerHTML = svg;
+          el.querySelectorAll('animate, animateTransform')
+            .forEach(a => { try { a.beginElement(); } catch(e) {} });
+        });
+      }
+    } else {
+      showBg('bg-canvas');
+      renderSVGToCanvas('svgs/bg-home-static.svg').then(applyBgScale);
+    }
+  }
+}
+
+function toggleAnimatedMode() {
+  isAnimatedMode = !isAnimatedMode;
+  document.body.classList.toggle('animated-mode', isAnimatedMode);
+  // Invalidate pipeline caches so the new mode re-renders rather than serving stale content.
+  document.getElementById('bg-track-inline').dataset.currentSrc = '';
+  document.getElementById('bg-canvas').dataset.currentSrc = '';
+  applyCurrentBg();
 }
 
 function route() {
   clearInterval(loadingDotsInterval);
   loadingDotsInterval = null;
   const hash = location.hash;
-  const app = document.getElementById('app');
+  const app  = document.getElementById('app');
 
   if (hash.startsWith('#/track/')) {
-    const slug = hash.slice('#/track/'.length);
+    const slug  = hash.slice('#/track/'.length);
     const track = tracks.find(t => t.slug === slug);
-
-    // Song-specific bg if defined, else fallback. Firefox+highDPI always uses the fallback.
-    const bgSrc = (!isFirefoxHighDPI && track?.background) ? track.background : 'svgs/bg-track.svg';
-    showBgCanvas();
-    renderSVGToCanvas(bgSrc).then(applyBgScale);
-
+    applyCurrentBg();
     track ? renderTrack(app, track) : renderNotFound(app);
   } else {
-    if (isFirefoxHighDPI) {
-      // Skip the animated home bg to avoid lag — use the static fallback via canvas
-      showBgCanvas();
-      renderSVGToCanvas('svgs/bg-track.svg').then(applyBgScale);
-    } else {
-      // Insert the animated SVG inline once; it plays and freezes (repeatCount="1" fill="freeze").
-      // Subsequent visits just un-hide the div — the animation stays at its end state.
-      if (!bgHomeLoaded) {
-        fetch('svgs/bg-home.svg')
-          .then(r => r.text())
-          .then(svg => { document.getElementById('bg-home').innerHTML = svg; });
-        bgHomeLoaded = true;
-      }
-      showBgHome();
-    }
-
+    applyCurrentBg();
     renderHome(app);
   }
 

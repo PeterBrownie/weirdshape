@@ -16,6 +16,7 @@
 <body>
   <div id="bg">
     <div id="bg-home" aria-hidden="true"></div>
+    <div id="bg-track-inline" aria-hidden="true"></div>
     <canvas id="bg-canvas" aria-hidden="true"></canvas>
   </div>
   <iframe id="sc-iframe" src="" allow="autoplay" style="display:none"></iframe>
@@ -37,6 +38,11 @@
         <button class="mini-skip"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="12" height="12" fill="currentColor"><polygon points="0,0 10,6 0,12"/><rect x="10" y="0" width="2" height="12"/></svg></button>
       </div>
     </div>
+  </div>
+  <div id="animated-mode-indicator" aria-hidden="true">
+    <svg viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+      <polygon points="6,0 7.4,4.5 12,4.5 8.3,7.3 9.7,12 6,9.2 2.3,12 3.7,7.3 0,4.5 4.6,4.5"/>
+    </svg>
   </div>
   <script src="app.js"></script>
 </body>

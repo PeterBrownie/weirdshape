@@ -28,15 +28,26 @@ html, body {
   overflow: hidden;
 }
 
-/* Animated home bg — inline SVG fills this div */
-#bg-home {
+/* Inline SVG bg containers (home + animated track bgs) */
+/* Identical layout to #bg-canvas: fixed 1280×720 centered, CSS-scaled to cover.
+   This forces Chrome to compute feTurbulence at 1280×720 CSS px (the canonical
+   SVG coordinate space) rather than at the viewport size — matching the canvas
+   pipeline and preventing turbulence pattern drift at different window widths.
+   It also caps the physical pixel work for Firefox on highDPI displays. */
+#bg-home,
+#bg-track-inline {
   position: absolute;
-  inset: 0;
+  top: 50%;
+  left: 50%;
+  width: 1280px;
+  height: 720px;
+  transform-origin: center center;
   overflow: hidden;
   display: none;
 }
 
-#bg-home > svg {
+#bg-home > svg,
+#bg-track-inline > svg {
   width: 100%;
   height: 100%;
 }
@@ -471,6 +482,38 @@ nav a:hover {
 .mini-play:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* Animated mode indicator */
+
+#animated-mode-indicator {
+  display: block;
+  position: fixed;
+  bottom: 1.25rem;
+  left: 1.5rem;
+  z-index: 200;
+  color: var(--text);
+  opacity: 0.18;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+#animated-mode-indicator svg {
+  width: 8px;
+  height: 8px;
+  display: block;
+}
+
+#animated-mode-indicator:hover {
+  opacity: 0.35;
+}
+
+body.animated-mode #animated-mode-indicator {
+  opacity: 0.45;
+}
+
+body.animated-mode #animated-mode-indicator:hover {
+  opacity: 0.65;
 }
 
 /* Not found */
