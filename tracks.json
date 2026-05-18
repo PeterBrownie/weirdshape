@@ -4,6 +4,7 @@
     "title": "Last Night",
     "year": 2026,
     "soundcloudUrl": "https://soundcloud.com/weirdshape/lastnight",
+    "background": "svgs/bg-lastnight.svg",
     "backgroundStatic": "svgs/bg-lastnight-static.svg",
     "description": "spent a decent amount of time on the melodies here. plus, i experimented with a BPM + key change, which was fun. this is also the first track i've ever actually put a little effort in for mastering, but i don't know if it really did much at all.",
     "tags": ["electronic"]
