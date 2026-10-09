@@ -507,19 +507,24 @@ nav a:hover {
 #animated-mode-indicator {
   display: block;
   position: fixed;
-  bottom: 1.25rem;
+  bottom: 1.1rem;
   left: 1.5rem;
   z-index: 200;
+  background: none;
+  border: none;
+  padding: 0;
   color: var(--text);
+  font-family: inherit;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
   opacity: 0.18;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, bottom 0.3s ease;
 }
 
-#animated-mode-indicator svg {
-  width: 8px;
-  height: 8px;
-  display: block;
+/* Sit above the mini player instead of on top of it */
+#mini-bar.visible ~ #animated-mode-indicator {
+  bottom: calc(66px + 0.6rem);
 }
 
 #animated-mode-indicator:hover {
@@ -527,11 +532,11 @@ nav a:hover {
 }
 
 body.animated-mode #animated-mode-indicator {
-  opacity: 0.45;
+  opacity: 0.3;
 }
 
 body.animated-mode #animated-mode-indicator:hover {
-  opacity: 0.65;
+  opacity: 0.55;
 }
 
 /* Not found */

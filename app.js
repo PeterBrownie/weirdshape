@@ -76,7 +76,7 @@ function restartTrack() {
 
 // Animated mode uses inline SVG (SMIL). Static mode uses the off-DOM img → canvas pipeline.
 // Firefox with high DPI starts in static mode; all others start in animated mode.
-// The user can toggle this at any time via the indicator in the bottom-left corner.
+// The user can toggle this at any time via the "animations on/off" text in the bottom-left corner.
 let isAnimatedMode = !(/Firefox/i.test(navigator.userAgent) && (window.devicePixelRatio || 1) > 1);
 
 // SVG text cache — avoids re-fetching when the user toggles mode.
@@ -177,7 +177,7 @@ async function init() {
     }
   });
 
-  if (isAnimatedMode) document.body.classList.add('animated-mode');
+  updateAnimatedModeIndicator();
   document.getElementById('animated-mode-indicator').addEventListener('click', toggleAnimatedMode);
   applyBgScale();
   route();
@@ -213,6 +213,16 @@ function setPlayBtnLoading(loading) {
     const viewedSlug = location.hash.match(/^#\/track\/(.+)$/)?.[1];
     btn.innerHTML = player.isPlaying && viewedSlug === player.track?.slug ? PAUSE_ICON : PLAY_ICON;
   }
+}
+
+// Starts the SMIL animations of an SVG that was just inserted into `el`.
+// The SVG must be laid out before beginElement() is called: in Chrome, beginning an
+// animation on a freshly inserted, not-yet-laid-out SVG leaves its clock running but the
+// animated values never applied (and without beginElement() it doesn't start at all).
+function startSvgAnimations(el) {
+  el.getBoundingClientRect(); // force layout
+  el.querySelectorAll('animate, animateTransform')
+    .forEach(a => { try { a.beginElement(); } catch(e) {} });
 }
 
 let bgHomeLoaded = false;
@@ -262,8 +272,7 @@ async function applyTrackBg(url) {
     showBg('bg-track-inline');
     inlineEl.innerHTML = prefixSvgIds(svgText, prefix);
     inlineEl.dataset.currentSrc = url;
-    inlineEl.querySelectorAll('animate, animateTransform')
-      .forEach(a => { try { a.beginElement(); } catch(e) {} });
+    startSvgAnimations(inlineEl);
   } else {
     const blob = new Blob([svgText], { type: 'image/svg+xml' });
     const objectUrl = URL.createObjectURL(blob);
@@ -305,8 +314,7 @@ function applyCurrentBg() {
         fetch('svgs/bg-home.svg').then(r => r.text()).then(svg => {
           const el = document.getElementById('bg-home');
           el.innerHTML = prefixSvgIds(svg, 'bg-home');
-          el.querySelectorAll('animate, animateTransform')
-            .forEach(a => { try { a.beginElement(); } catch(e) {} });
+          startSvgAnimations(el);
         });
       }
     } else {
@@ -316,9 +324,14 @@ function applyCurrentBg() {
   }
 }
 
+function updateAnimatedModeIndicator() {
+  document.body.classList.toggle('animated-mode', isAnimatedMode);
+  document.getElementById('animated-mode-indicator').textContent = `animations ${isAnimatedMode ? 'on' : 'off'}`;
+}
+
 function toggleAnimatedMode() {
   isAnimatedMode = !isAnimatedMode;
-  document.body.classList.toggle('animated-mode', isAnimatedMode);
+  updateAnimatedModeIndicator();
   // Invalidate pipeline caches so the new mode re-renders rather than serving stale content.
   document.getElementById('bg-track-inline').dataset.currentSrc = '';
   document.getElementById('bg-canvas').dataset.currentSrc = '';
