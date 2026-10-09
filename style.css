@@ -16,7 +16,7 @@ html, body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 #bg {
@@ -100,7 +100,19 @@ nav a:hover {
 
 /* Home */
 
+/* Home fills the viewport: the header stays put and only the track list scrolls,
+   so the scrollbar sits directly to the right of the songs. */
+#app.home {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  padding-bottom: 0;
+}
+
 .home-header {
+  flex-shrink: 0;
   margin-bottom: 4rem;
 }
 
@@ -113,16 +125,33 @@ nav a:hover {
 
 .home-header .tagline {
   margin-top: 1rem;
-  color: var(--muted);
   font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.home-header .tagline a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.home-header .tagline a:hover {
+  color: var(--accent);
 }
 
 /* Track list */
 
 .track-list {
   list-style: none;
+}
+
+#app.home .track-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
 .track-list li {

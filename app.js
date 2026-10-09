@@ -348,9 +348,11 @@ function route() {
     const slug  = hash.slice('#/track/'.length);
     const track = tracks.find(t => t.slug === slug);
     applyCurrentBg();
+    app.classList.remove('home');
     track ? renderTrack(app, track) : renderNotFound(app);
   } else {
     applyCurrentBg();
+    app.classList.add('home');
     renderHome(app);
   }
 
@@ -372,7 +374,7 @@ function renderHome(app) {
   app.innerHTML = `
     <header class="home-header">
       <h1>weirdshape</h1>
-      <p class="tagline">this website is a work in progress</p>
+      <p class="tagline"><a href="https://soundcloud.com/weirdshape" target="_blank" rel="noopener">soundcloud.com/weirdshape</a></p>
     </header>
     <ul class="track-list">${items}</ul>
   `;
