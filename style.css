@@ -8,7 +8,7 @@
   --bg: #080808;
   --text: #e0e0e0;
   --muted: #505050;
-  --accent: #b8ff00;
+  --accent: #fff;
   --border: rgba(255, 255, 255, 0.08);
 }
 
@@ -44,6 +44,12 @@ html, body {
   transform-origin: center center;
   overflow: hidden;
   display: none;
+}
+
+/* Hidden via visibility (see showBg) so its animation state survives page changes */
+#bg-home {
+  display: block;
+  visibility: hidden;
 }
 
 #bg-home > svg,
@@ -287,7 +293,10 @@ nav a:hover {
   border: 1px solid var(--border);
   color: var(--text);
   font-family: inherit;
-  padding: 0.4rem 0.75rem;
+  padding: 0;
+  width: 2.3rem;
+  height: 1.7rem;
+  flex-shrink: 0;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
   display: flex;
@@ -301,7 +310,10 @@ nav a:hover {
   border: 1px solid var(--border);
   color: var(--text);
   font-family: inherit;
-  padding: 0.4rem 0.65rem;
+  padding: 0;
+  width: 2.2rem;
+  height: 1.7rem;
+  flex-shrink: 0;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
   display: flex;
@@ -327,7 +339,10 @@ nav a:hover {
   border: 1px solid var(--border);
   color: var(--text);
   font-family: inherit;
-  padding: 0.3rem 0.6rem;
+  padding: 0;
+  width: 2.1rem;
+  height: 1.5rem;
+  flex-shrink: 0;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
   display: flex;
@@ -471,7 +486,10 @@ nav a:hover {
   border: 1px solid var(--border);
   color: var(--text);
   font-family: inherit;
-  padding: 0.3rem 0.65rem;
+  padding: 0;
+  width: 2.1rem;
+  height: 1.5rem;
+  flex-shrink: 0;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
   display: flex;

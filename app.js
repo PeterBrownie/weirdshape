@@ -151,6 +151,23 @@ async function init() {
   document.querySelector('.mini-restart').addEventListener('click', () => restartTrack());
   document.querySelector('.mini-skip').addEventListener('click', () => skipToNext());
 
+  // Space toggles play/pause. With nothing loaded yet, it starts the track being viewed.
+  const isSpace = e => e.code === 'Space' && !e.ctrlKey && !e.metaKey && !e.altKey
+    && !e.target.closest?.('input, textarea, select, [contenteditable]');
+  document.addEventListener('keydown', e => {
+    if (!isSpace(e)) return;
+    const pageBtn = document.querySelector('.play-btn');
+    if (!player.track && !pageBtn) return; // nothing to control — leave default scrolling
+    e.preventDefault();
+    if (e.repeat || player.loading) return;
+    if (player.widget) player.widget.toggle();
+    else if (!player.track) pageBtn.click();
+  });
+  // A focused button would otherwise also be clicked by space on keyup
+  document.addEventListener('keyup', e => {
+    if (isSpace(e) && e.target.closest?.('button') && (player.track || document.querySelector('.play-btn'))) e.preventDefault();
+  });
+
   window.addEventListener('resize', () => {
     applyBgScale();
     const canvas = document.querySelector('.waveform');
@@ -186,17 +203,22 @@ function setPlayBtnLoading(loading) {
     }, 380);
   } else {
     btn.disabled = false;
-    btn.innerHTML = PLAY_ICON;
+    const viewedSlug = location.hash.match(/^#\/track\/(.+)$/)?.[1];
+    btn.innerHTML = player.isPlaying && viewedSlug === player.track?.slug ? PAUSE_ICON : PLAY_ICON;
   }
 }
 
 let bgHomeLoaded = false;
 
 // Show exactly one bg layer; hide the others.
+// bg-home is hidden with visibility rather than display so it stays in the render tree:
+// its one-shot SMIL animation keeps its (frozen) state while a track page is open, instead
+// of being reset or dropped by browsers that stop animating display:none SVGs.
 function showBg(id) {
-  for (const elId of ['bg-home', 'bg-track-inline', 'bg-canvas']) {
+  for (const elId of ['bg-track-inline', 'bg-canvas']) {
     document.getElementById(elId).style.display = elId === id ? 'block' : 'none';
   }
+  document.getElementById('bg-home').style.visibility = id === 'bg-home' ? 'visible' : 'hidden';
 }
 
 // Fetch a track background SVG and route it to the correct pipeline.
@@ -544,6 +566,7 @@ async function activateTrack(track) {
       show_user: false,
       show_reposts: false,
       show_teaser: false,
+      callback: onPlayerReady,
     });
   }
 }
@@ -551,51 +574,7 @@ async function activateTrack(track) {
 function initPlayerWidget() {
   player.widget = SC.Widget(document.getElementById('sc-iframe'));
 
-  player.widget.bind(SC.Widget.Events.READY, () => {
-    player.widget.getDuration(ms => {
-      player.duration = ms;
-      // Update the track page if the user is still on the playing track
-      const viewedSlug = location.hash.match(/^#\/track\/(.+)$/)?.[1];
-      if (viewedSlug === player.track?.slug) {
-        const el = document.querySelector('.time-total');
-        if (el) el.textContent = fmt(ms);
-      }
-    });
-
-    player.widget.getCurrentSound(sound => {
-      player.loading = false;
-      setPlayBtnLoading(false);
-      const restartBtn = document.querySelector('.restart-btn');
-      if (restartBtn) restartBtn.disabled = false;
-      const miniRestart = document.querySelector('.mini-restart');
-      if (miniRestart) miniRestart.disabled = false;
-      updateMiniBar();
-
-      // Pull waveform from cache if already fetched by meta widget
-      const cached = trackCache[player.track?.slug];
-      if (cached?.samples) {
-        player.samples = cached.samples;
-        showPlayerWaveform();
-      } else if (sound.waveform_url) {
-        fetch(sound.waveform_url.replace('.png', '.json'))
-          .then(r => r.json())
-          .then(data => {
-            player.samples = data.samples.map(v => v / data.height);
-            // Populate cache too
-            if (player.track) {
-              trackCache[player.track.slug] = {
-                artworkSrc: trackCache[player.track.slug]?.artworkSrc ?? null,
-                samples: player.samples,
-              };
-            }
-            showPlayerWaveform();
-          })
-          .catch(showPlayerWaveform);
-      } else {
-        showPlayerWaveform();
-      }
-    });
-  });
+  player.widget.bind(SC.Widget.Events.READY, onPlayerReady);
 
   player.widget.bind(SC.Widget.Events.PLAY_PROGRESS, data => {
     player.progress = data.relativePosition;
@@ -623,6 +602,9 @@ function initPlayerWidget() {
 
   player.widget.bind(SC.Widget.Events.PLAY, () => {
     player.isPlaying = true;
+    // Audio is playing, so we're no longer loading even if the ready callback hasn't run yet
+    player.loading = false;
+    setPlayBtnLoading(false);
     document.querySelectorAll('.play-btn, .mini-play').forEach(b => { b.innerHTML = PAUSE_ICON; });
   });
 
@@ -643,6 +625,54 @@ function initPlayerWidget() {
     const canvas = document.querySelector('.waveform');
     if (canvas) drawWaveform(canvas, trackCache[player.track?.slug]?.samples ?? null, 0);
     skipToNext();
+  });
+}
+
+// Runs each time the player widget finishes loading a track. The widget API only fires
+// READY handlers once, so later tracks get here via the load() callback instead.
+function onPlayerReady() {
+  player.widget.getDuration(ms => {
+    player.duration = ms;
+    // Update the track page if the user is still on the playing track
+    const viewedSlug = location.hash.match(/^#\/track\/(.+)$/)?.[1];
+    if (viewedSlug === player.track?.slug) {
+      const el = document.querySelector('.time-total');
+      if (el) el.textContent = fmt(ms);
+    }
+  });
+
+  player.widget.getCurrentSound(sound => {
+    player.loading = false;
+    setPlayBtnLoading(false);
+    const restartBtn = document.querySelector('.restart-btn');
+    if (restartBtn) restartBtn.disabled = false;
+    const miniRestart = document.querySelector('.mini-restart');
+    if (miniRestart) miniRestart.disabled = false;
+    updateMiniBar();
+
+    // Pull waveform from cache if already fetched by meta widget
+    const cached = trackCache[player.track?.slug];
+    if (cached?.samples) {
+      player.samples = cached.samples;
+      showPlayerWaveform();
+    } else if (sound.waveform_url) {
+      fetch(sound.waveform_url.replace('.png', '.json'))
+        .then(r => r.json())
+        .then(data => {
+          player.samples = data.samples.map(v => v / data.height);
+          // Populate cache too
+          if (player.track) {
+            trackCache[player.track.slug] = {
+              artworkSrc: trackCache[player.track.slug]?.artworkSrc ?? null,
+              samples: player.samples,
+            };
+          }
+          showPlayerWaveform();
+        })
+        .catch(showPlayerWaveform);
+    } else {
+      showPlayerWaveform();
+    }
   });
 }
 
@@ -681,7 +711,7 @@ function drawWaveform(canvas, samples, progress = 0) {
     ctx.fillStyle = 'rgba(255,255,255,0.1)';
     ctx.fillRect(0, h / 2 - 1, w, 2);
     if (progress > 0) {
-      ctx.fillStyle = '#b8ff00';
+      ctx.fillStyle = '#fff';
       ctx.fillRect(0, h / 2 - 1, w * progress, 2);
     }
     return;
@@ -697,7 +727,7 @@ function drawWaveform(canvas, samples, progress = 0) {
     let peak = 0;
     for (let j = start; j < end; j++) peak = Math.max(peak, samples[j]);
     const barH = Math.max(2, peak * h);
-    ctx.fillStyle = i / numBars < progress ? '#b8ff00' : 'rgba(255,255,255,0.15)';
+    ctx.fillStyle = i / numBars < progress ? '#fff' : 'rgba(255,255,255,0.15)';
     ctx.fillRect(i * step, (h - barH) / 2, barW, barH);
   }
 }
