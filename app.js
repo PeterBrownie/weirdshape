@@ -182,6 +182,13 @@ async function init() {
   applyBgScale();
   route();
   window.addEventListener('hashchange', route);
+  // A track SVG inlined before the window load event may not get its SMIL clock started.
+  // Re-insert it once the page has loaded (the same thing toggling the star off/on does).
+  if (document.readyState !== 'complete') {
+    window.addEventListener('load', () => {
+      if (isAnimatedMode && location.hash.startsWith('#/track/')) applyCurrentBg();
+    }, { once: true });
+  }
 }
 
 // ─── Router ──────────────────────────────────────────────────────────────────
@@ -210,6 +217,9 @@ function setPlayBtnLoading(loading) {
 
 let bgHomeLoaded = false;
 
+// Bumped on every background change so a slow SVG fetch can't apply over a newer one.
+let bgRequest = 0;
+
 // Show exactly one bg layer; hide the others.
 // bg-home is hidden with visibility rather than display so it stays in the render tree:
 // its one-shot SMIL animation keeps its (frozen) state while a track page is open, instead
@@ -231,24 +241,27 @@ function showBg(id) {
 async function applyTrackBg(url) {
   const inlineEl = document.getElementById('bg-track-inline');
   const canvas   = document.getElementById('bg-canvas');
+  const request  = bgRequest;
 
   // Instant show if already rendered for the current mode.
-  if (isAnimatedMode  && inlineEl.dataset.currentSrc === url) { showBg('bg-track-inline'); return; }
-  if (!isAnimatedMode && canvas.dataset.currentSrc   === url) { showBg('bg-canvas'); return; }
+  if (!isAnimatedMode && canvas.dataset.currentSrc === url) { showBg('bg-canvas'); return; }
 
   // Clear old bg immediately — blank is better than showing the wrong page's bg.
-  showBg('bg-canvas');
+  if (!(isAnimatedMode && inlineEl.dataset.currentSrc === url)) showBg('bg-canvas');
 
   if (!svgTextCache[url]) svgTextCache[url] = await fetch(url).then(r => r.text());
   const svgText = svgTextCache[url];
+  // The user navigated (or toggled mode) while the SVG was loading — a newer call owns the bg.
+  if (request !== bgRequest) return;
 
   if (isAnimatedMode) {
+    // Always insert a fresh SVG, and only once the container is visible. An SVG that was
+    // inserted into (or left sitting in) a display:none container can come back with its
+    // SMIL animations stopped, so a previously rendered copy is never reused.
     const prefix = url.replace(/.*\//, '').replace(/\.svg$/, '');
+    showBg('bg-track-inline');
     inlineEl.innerHTML = prefixSvgIds(svgText, prefix);
     inlineEl.dataset.currentSrc = url;
-    showBg('bg-track-inline');
-    // Restart SMIL animations explicitly — required in Firefox when the SVG was
-    // inserted into a hidden element before the container became visible.
     inlineEl.querySelectorAll('animate, animateTransform')
       .forEach(a => { try { a.beginElement(); } catch(e) {} });
   } else {
@@ -257,23 +270,26 @@ async function applyTrackBg(url) {
     await new Promise(resolve => {
       const img = new Image();
       img.onload = () => {
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width  = Math.round(img.naturalWidth  * dpr);
-        canvas.height = Math.round(img.naturalHeight * dpr);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(objectUrl);
-        canvas.dataset.currentSrc = url;
+        if (request === bgRequest) {
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width  = Math.round(img.naturalWidth  * dpr);
+          canvas.height = Math.round(img.naturalHeight * dpr);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.dataset.currentSrc = url;
+        }
         resolve();
       };
       img.onerror = () => { URL.revokeObjectURL(objectUrl); resolve(); };
       img.src = objectUrl;
     });
-    showBg('bg-canvas');
+    if (request === bgRequest) showBg('bg-canvas');
   }
 }
 
 // Re-renders only the background for the current route. Called by route() and toggleAnimatedMode().
 function applyCurrentBg() {
+  bgRequest++;
   const hash = location.hash;
   if (hash.startsWith('#/track/')) {
     const slug  = hash.slice('#/track/'.length);
